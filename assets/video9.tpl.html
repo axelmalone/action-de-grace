@@ -1,0 +1,250 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<style>/*FONTS*/</style>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1080px;height:1920px;overflow:hidden;background:#000;-webkit-font-smoothing:antialiased}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#000}
+
+  /* ---------- the Claude app ---------- */
+  #chat{position:absolute;inset:0;background:#FAF9F5;color:#141413;font-family:'Hanken Grotesk',sans-serif}
+  #bar{position:absolute;left:0;right:0;top:0;height:200px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:34px;border-bottom:1.5px solid #E8E5DC}
+  #bar .ham{position:absolute;left:64px;bottom:44px;width:44px;height:30px;border-top:4px solid #3D3D3A;border-bottom:4px solid #3D3D3A}
+  #bar .ham:after{content:'';position:absolute;left:0;right:12px;top:9px;border-top:4px solid #3D3D3A}
+  #bar .title{font-size:38px;font-weight:600;color:#3D3D3A;max-width:720px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #bar .new{position:absolute;right:64px;bottom:38px;width:44px;height:44px;border:4px solid #3D3D3A;border-radius:12px}
+  #thread{position:absolute;left:0;right:0;top:200px;bottom:330px;padding:56px 64px 0;overflow:hidden}
+  .msg{will-change:transform,opacity}
+  .user{display:flex;justify-content:flex-end;margin-bottom:56px}
+  .user p{background:#F0EEE6;border-radius:32px;padding:34px 42px;font-size:50px;line-height:1.38;max-width:860px;color:#141413}
+  .claude{margin-bottom:46px}
+  .claude p{font-family:'Literata',serif;font-variation-settings:'opsz' 14;font-size:52px;line-height:1.5;color:#1F1E1D;letter-spacing:0}
+  .think{display:flex;align-items:center;gap:22px;font-size:44px;color:#6B6A65;margin-bottom:40px;height:76px}
+  .artifact{display:flex;align-items:center;gap:30px;border:2px solid #E3DFD4;background:#fff;border-radius:28px;padding:22px;box-shadow:0 6px 24px rgba(20,20,19,.06);margin-top:10px}
+  .artifact .thumb{width:210px;height:280px;border-radius:16px;background:#111 center/cover;position:relative;flex:none;overflow:hidden}
+  .artifact .thumb:after{content:'';position:absolute;left:50%;top:50%;margin:-26px 0 0 -18px;border-left:44px solid #fff;border-top:26px solid transparent;border-bottom:26px solid transparent;opacity:.95}
+  .artifact .meta b{display:block;font-size:50px;font-weight:600;color:#141413}
+  .artifact .meta span{display:block;font-size:38px;color:#6B6A65;margin-top:10px}
+  .poster{width:820px;height:1000px;background:#F2EDE4;border:2px solid #E3DFD4;border-radius:28px;padding:64px 64px 60px;display:flex;flex-direction:column;box-shadow:0 10px 34px rgba(20,20,19,.10);margin-top:6px}
+  #chat .claude .poster .ptop{display:flex;justify-content:space-between;align-items:center}
+  #chat .claude .poster .ptop span{font-family:'Inter Tight',sans-serif;font-size:30px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#141413;border:2px solid #141413;border-radius:999px;padding:10px 24px}
+  #chat .claude .poster .pname{font-family:'Instrument Serif',serif;font-style:italic;font-size:150px;line-height:.95;margin-top:120px;letter-spacing:-.01em;color:#141413}
+  #chat .claude .poster .peye{font-family:'Inter Tight',sans-serif;font-size:32px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#D52B1E;margin-top:34px}
+  #chat .claude .poster .pbody p{font:inherit;line-height:inherit;color:inherit}
+  #chat .claude .poster .pbody{margin-top:auto;padding-top:44px;font-family:'Literata',serif;font-variation-settings:'opsz' 14;font-size:44px;line-height:1.4;color:#3D3D3A}
+  #chat .claude .poster .pask{font-family:'Instrument Serif',serif;font-style:italic;font-size:76px;color:#141413;margin-top:44px;border-top:2px solid #D8D2C4;padding-top:30px}
+  .plain p{font-family:'Source Serif 4',serif;font-size:64px;line-height:1.45}
+  #composer{position:absolute;left:48px;right:48px;bottom:150px;min-height:130px;background:#fff;border:2px solid #E3DFD4;border-radius:36px;display:flex;align-items:center;padding:24px 24px 24px 40px;box-shadow:0 4px 18px rgba(20,20,19,.05)}
+  #composer .txt{flex:1;font-size:46px;line-height:1.35;color:#141413}
+  #composer .ph{color:#A3A099}
+  #composer .send{width:84px;height:84px;border-radius:22px;background:#E8C4B4;display:grid;place-items:center;flex:none;align-self:flex-end}
+  .caret{display:inline-block;width:3px;height:46px;background:#141413;vertical-align:-9px;margin-left:3px}
+  #disc{position:absolute;left:0;right:0;bottom:84px;text-align:center;font-size:28px;color:#8A877F}
+
+  /* ---------- the film (digicam) ---------- */
+  #film{position:absolute;inset:0;opacity:0;color:#fff;font-family:'Inter Tight',sans-serif}
+  #cam{position:absolute;inset:0;will-change:transform}
+  #photos img,#clip{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;filter:contrast(1.12) saturate(1.12) brightness(1.03) sepia(.07)}
+  #vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.45) 100%)}
+  #grain{position:absolute;inset:0;width:1080px;height:1920px;opacity:.16;mix-blend-mode:overlay}
+  #stamp{position:absolute;right:78px;bottom:132px;font-family:'DSEG7';font-weight:700;font-size:50px;letter-spacing:.06em;color:#FF9330;text-shadow:0 0 6px rgba(255,120,20,.9),0 0 18px rgba(255,90,0,.45);opacity:.92}
+  #stamp .ap{font-family:'Inter Tight';font-weight:600;font-size:46px;vertical-align:14px;margin-right:4px}
+  #title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;z-index:2;padding:0 70px;background:radial-gradient(ellipse 80% 38% at 50% 50%,rgba(0,0,0,.42),rgba(0,0,0,0))}
+  #title .t{font-family:'Instrument Serif',serif;font-style:italic;font-size:170px;line-height:1;text-shadow:0 2px 30px rgba(0,0,0,.5)}
+  #title .s{font-size:50px;font-weight:500;line-height:1.25;letter-spacing:.01em;margin-top:44px;opacity:.95;text-shadow:0 2px 20px rgba(0,0,0,.6)}
+  #title .s:empty{display:none}
+  #intro{position:absolute;left:0;right:0;top:910px;text-align:center;font-size:64px;font-weight:500;letter-spacing:.12em;opacity:0}
+  #supBg{position:absolute;left:0;right:0;bottom:0;height:820px;background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,0));opacity:0}
+  #sup{position:absolute;left:60px;right:60px;bottom:330px;text-align:center;font-size:80px;font-weight:650;line-height:1.08;letter-spacing:-.01em;text-shadow:0 2px 26px rgba(0,0,0,.7),0 0 3px rgba(0,0,0,.6)}
+  #sup small{display:block;font-size:54px;font-weight:500;margin-top:18px}
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+  #blk{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+</style></head>
+<body><div id="stage">
+
+  <section id="chat">
+    <div id="bar"><i class="ham"></i><p class="title">Claude-inspired poster for Hinge match</p></div>
+    <div id="thread"></div>
+    <div id="composer"><div class="txt" id="cTxt"></div><div class="send" id="cSend"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>
+    <p id="disc">Claude can make mistakes. Please double-check responses.</p>
+  </section>
+
+  <section id="film">
+    <div id="cam"><div id="photos"></div><img id="clip"><div id="title"><p class="t"></p><p class="s"></p></div><div id="vignette"></div></div>
+    <canvas id="grain" width="540" height="960"></canvas>
+    <div id="supBg"></div><p id="sup"></p>
+    <p id="stamp"></p>
+    <p id="intro">introducing</p>
+  </section>
+
+  <div id="expand" style="position:absolute;background:#000 center/cover;opacity:0;z-index:6"></div><div id="blk"></div><div id="flash"></div>
+</div>
+<script>
+const DATA = /*BEATS*/, DATES = /*DATES*/, SHOTS = /*SHOTS*/, FRAMES = /*FRAMES*/;
+const Q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
+const easeInOut = x => (x = clamp(x), x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const seg = (b, b0, b1) => clamp((b - b0) / (b1 - b0));
+const type = (s, p) => s.slice(0, Math.round(s.length * clamp(p)));
+
+const BT = DATA.beats, PER = (BT[BT.length - 1] - BT[0]) / (BT.length - 1), LEAD = 0.025;
+function beatAt(t) {
+  if (t < BT[0]) return (t - BT[0]) / PER;
+  let lo = 0, hi = BT.length - 1;
+  if (t >= BT[hi]) return hi + (t - BT[hi]) / PER;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (BT[m] <= t) lo = m; else hi = m; }
+  return lo + (t - BT[lo]) / (BT[lo + 1] - BT[lo]);
+}
+const kickAt = i => (i >= 0 && i % 2 === 0 ? DATA.kick[i] || 0 : 0);
+const hit = b => Math.exp(-(b - Math.floor(b)) * 7);
+const timeAt = b => { const i = Math.floor(b); return BT[i] + (b - i) * (BT[i + 1] - BT[i]); };
+
+// ---- the edit, in beats. Music plays 0–29, silent 29–31 (the artifact opens), drop 31, hit-and-stop at 96, silent after ----
+const YEAH = 27.66, TITLE = [31, 36], FILM_END = 64, END = 76; // hard cut into the film on the vocal 'yeah' (0:13.1)
+window.DURATION = BT[FILM_END] + (END - FILM_END) * PER;
+const ASK = "promised imogen a claude-inspired poster. she matched. now i have to deliver.";
+const REPLY = 'A poster feels like underselling it. How about a video?';
+const ASK2 = 'bit much?';
+const REPLY2 = 'Fair. Here’s the poster:';
+
+const SUPERS = [];
+// film cards, centred: [from, to, big line, small line, big size]. 4 beats = a bar; 36–40 is the pause before the reveal
+const CARDS = [
+  [31, 36, 'the biggest release<br>since drake.', '', 128],
+  [40, 48, 'canadian thanksgiving', 'like the american one,<br>just a smidge earlier.', 150],
+  [48, 56, 'sunday, 11 october.', '', 120],
+  [56, 64, 'drinks from 4:30.', '', 120],
+];
+
+// ---- Claude's spark ----
+const RAYS = [[-90,1,1],[-55,.9,.85],[-18,.96,1],[22,.88,.85],[58,.98,1],[95,.9,.85],[130,.97,1],[168,.92,.85],[205,.98,1],[240,.88,.85]];
+function spark(size) {
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '-50 -50 100 100'); svg.setAttribute('width', size); svg.setAttribute('height', size); svg.style.overflow = 'visible';
+  const g = document.createElementNS(ns, 'g'); svg.appendChild(g);
+  RAYS.forEach(([a, l, w]) => { const ln = document.createElementNS(ns, 'line'); const r = a * Math.PI / 180;
+    ln.setAttribute('x1', 0); ln.setAttribute('y1', 0); ln.setAttribute('x2', Math.cos(r) * 45 * l); ln.setAttribute('y2', Math.sin(r) * 45 * l);
+    ln.setAttribute('stroke', '#D97757'); ln.setAttribute('stroke-width', 9.5 * w); ln.setAttribute('stroke-linecap', 'round'); g.appendChild(ln); });
+  return { svg, g };
+}
+
+// ---- chat thread: built once, revealed by beat ----
+const T = $('thread');
+T.innerHTML = `<div id="inner">
+  <div class="msg user" id="m1"><p>${ASK}</p></div>
+  <div class="msg think" id="th"><span id="thSpark"></span><span id="thLabel">Thinking</span></div>
+  <div class="msg claude" id="m2"><p id="m2t"></p>
+    <div class="artifact" id="art"><div class="thumb" style="background-image:url(v9/340.jpg)"></div><div class="meta"><b>action de grâce</b><span>Video · 0:15</span></div></div></div>
+  <div class="msg user" id="m3"><p>${ASK2}</p></div>
+  <div class="msg claude" id="m4"><p id="m4t"></p></div>
+  <div class="msg claude" id="m5"><div class="poster">
+      <div class="ptop"><svg viewBox="-2015 -2000 4030 4030" width="70" height="70"><path fill="#D52B1E" d="__LEAF__"/></svg><span>Sun 11 Oct</span></div>
+      <p class="pname">action de grâce</p>
+      <p class="peye">Thanksgiving eve drinks</p>
+      <div class="pbody"><p>Canadians and friends.</p><p>From 4:30pm.</p></div>
+      <p class="pask">be my +1?</p>
+    </div></div></div>`;
+const sp = spark(64); $('thSpark').appendChild(sp.svg);
+
+// ---- film media ----
+const IMGS = {};
+SHOTS.forEach(([, src]) => { if (!src.startsWith('p:') || IMGS[src]) return; const i = new Image(); i.src = `v9/${src.slice(2)}.jpg`; $('photos').appendChild(i); IMGS[src] = i; });
+window.READY = Promise.all(Object.values(IMGS).map(i => i.decode().catch(() => {})));
+const gctx = $('grain').getContext('2d'), gd = gctx.createImageData(540, 960);
+function grain(frame) { let s = (frame * 2654435761) >>> 0;
+  for (let i = 0; i < gd.data.length; i += 4) { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; const v = (s >>> 0) & 255; gd.data[i] = gd.data[i + 1] = gd.data[i + 2] = v; gd.data[i + 3] = 255; }
+  gctx.putImageData(gd, 0, 0); }
+const show = (id, on) => { const e = $(id); e.style.display = on ? '' : 'none'; return e; };
+function pop(el, b, at) { el.style.opacity = b >= at ? 1 : 0; el.style.transform = `translateY(${b >= at ? 18 * Math.exp(-(b - at) * 8) : 18}px)`; }
+
+window.render = async function (time) {
+  const t = time + LEAD, b = beatAt(t), bi = Math.floor(b);
+  const inFilm = b >= YEAH && b < FILM_END, inPauseChat = false;
+  $('chat').style.display = inFilm ? 'none' : ''; $('film').style.opacity = inFilm ? 1 : 0;
+
+  if (!inFilm) {
+    const after = b >= FILM_END;
+    // opening: you type the ask, send on beat 6; Claude thinks; replies; the artifact lands on beat 20
+    const typing = after ? (b < 66 ? ASK2 : '') : (b < 6 ? ASK : '');
+    const tp = after ? seg(b, 64.6, 65.6) : seg(b, 0.3, 5.4);
+    $('cTxt').innerHTML = typing ? type(typing, tp) + '<i class="caret"></i>' : '<span class="ph">Reply to Claude…</span>';
+    const sendAt = after ? 66 : 6;
+    $('cSend').style.background = typing && tp >= 1 ? '#D97757' : '#E8C4B4';
+    $('cSend').style.transform = `scale(${b >= sendAt && b < sendAt + .4 ? .88 : 1})`;
+    pop($('m1'), b, 6);
+    show('th', !after && b >= 6.5 && b < 12); sp.g.setAttribute('transform', `rotate(${b * 160})`);
+    $('thLabel').textContent = 'Thinking' + '.'.repeat(1 + bi % 3);
+    pop($('m2'), b, 12); $('m2t').textContent = type(REPLY, seg(b, 12, 18));
+    pop($('art'), b, 23);
+
+    // after the film: the thread scrolls up; you ask, Claude answers plainly
+    show('m3', after); show('m4', after); show('m5', after);
+    if (after) { pop($('m3'), b, 66); pop($('m4'), b, 67.5); $('m4t').textContent = type(REPLY2, seg(b, 67.5, 68.4)); pop($('m5'), b, 69); }
+    const I = $('inner'), over = Math.max(0, I.scrollHeight - T.clientHeight + 60);
+    I.style.transform = after ? `translateY(${-over * easeOut(seg(b, 65.6, 66.6))}px)` : '';
+    $('blk').style.opacity = 0; $('flash').style.opacity = 0;
+    const X = $('expand');
+    if (inPauseChat) {
+      const r = $('art').querySelector('.thumb').getBoundingClientRect(), q = seg(b, 29.4, 31), p = q * q * q; // accelerates into the drop
+      const L = r.left * (1 - p), Tp = r.top * (1 - p), W = r.width + (1080 - r.width) * p, H = r.height + (1920 - r.height) * p;
+      Object.assign(X.style, { left: L + 'px', top: Tp + 'px', width: W + 'px', height: H + 'px', borderRadius: 16 * (1 - p) + 'px', opacity: 1,
+        backgroundImage: 'url(v9/340.jpg)', filter: `contrast(${1 + .12 * p}) saturate(${1 + .12 * p}) sepia(${.07 * p})` });
+    } else X.style.opacity = 0;
+    return;
+  }
+
+  // ---- the film ----
+  $('expand').style.opacity = 0;
+  grain(Math.floor(time * 24));
+  const card = CARDS.find(c => b >= c[0] && b < c[1]), inPause = false, inTitle = b >= TITLE[0] && b < TITLE[1];
+  const shot = !inPause ? SHOTS.filter(s => s[0] <= b).pop() : null;
+  Object.values(IMGS).forEach(i => i.style.display = 'none');
+  const clip = $('clip'); clip.style.display = 'none'; let wait = null;
+  if (shot) {
+    const [at, src] = shot, since = b - at;
+    if (src.startsWith('p:')) { const img = IMGS[src]; img.style.display = 'block'; img.style.transform = `scale(${1.03 + .04 * since / 2})`; }
+    else {
+      const key = src.slice(2).replace('@', '_'), n = FRAMES[key], k = Math.min(n, 1 + Math.floor(Math.max(0, t - timeAt(at)) * 30));
+      const path = `v9/fr/${key}/${String(k).padStart(3, '0')}.jpg`;
+      clip.style.display = 'block'; clip.style.transform = `scale(${1.02 + .02 * since / 2})`;
+      if (clip.dataset.p !== path) { clip.dataset.p = path; clip.src = path; wait = clip.decode().catch(() => {}); }
+    }
+  }
+  const build = b < 31 ? .05 * Math.exp(-((b * 2) % 1) * 6) : 0; // half-beat punches through the lull
+  $('cam').style.transform = `scale(${1 + build + .026 * kickAt(bi) * hit(b)})`;
+  $('title').style.opacity = card ? 1 : 0;
+  if (card) {
+    const tl = $('title').querySelector('.t'), sl = $('title').querySelector('.s');
+    if (tl.dataset.k !== card[2]) { tl.innerHTML = card[2]; tl.dataset.k = card[2]; sl.innerHTML = card[3]; tl.style.fontSize = card[4] + 'px'; }
+    $('title').style.transform = `scale(${1 + .1 * Math.exp(-(b - card[0]) * 4)})`;
+  }
+  // the pause: the artifact opens to black, "introducing"
+  $('intro').style.opacity = 0;
+  $('blk').style.opacity = inPause ? 1 - easeInOut(seg(b, 29, 29.5)) * 0 : 0;
+  $('blk').style.opacity = inPause ? 1 : 0; $('intro').style.zIndex = 5; $('blk').style.zIndex = 4;
+  // supers
+  const s = SUPERS.find(x => b >= x[0] && b < x[1]), sup = $('sup');
+  if (s) { const html = s[2] + (s[3] ? `<br>${s[3]}` : '') + (s[4] ? `<small>${s[4]}</small>` : '');
+    if (sup.dataset.k !== html) { sup.innerHTML = html; sup.dataset.k = html; }
+    sup.style.opacity = 1; $('supBg').style.opacity = 1; sup.style.transform = `scale(${1 + .06 * Math.exp(-(b - s[0]) * 10)})`;
+  } else { sup.style.opacity = 0; $('supBg').style.opacity = 0; }
+  let fl = (b >= 31 ? Math.exp(-(b - 31) * 5) : 0) + (b >= YEAH && b < YEAH + 1 ? .6 * Math.exp(-(b - YEAH) * 10) : 0);
+  [40, 48, 56].forEach(a => { if (b >= a && b < a + 1) fl += .4 * Math.exp(-(b - a) * 14); });
+  $('flash').style.opacity = clamp(fl);
+  $('stamp').innerHTML = `<span class="ap">'</span>${shot && !inTitle ? DATES[shot[1]] : '26 10 11'}`;
+  $('stamp').style.opacity = inPause ? 0 : .92;
+  if (wait) await wait;
+};
+
+if (!Q.has('capture')) {
+  const fit = () => { const s = Math.min(innerWidth / 1080, innerHeight / 1920); document.body.style.transform = `scale(${s})`; document.body.style.transformOrigin = '0 0'; };
+  fit(); addEventListener('resize', fit);
+  const audio = new Audio(Q.get('audio') || 'spins-v14.m4a');
+  addEventListener('click', () => { audio.currentTime = 0; audio.play(); });
+  (function loop() { render(Math.min(audio.currentTime, DURATION)); requestAnimationFrame(loop); })();
+} else render(0);
+</script>
+</body></html>
